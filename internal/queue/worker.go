@@ -145,7 +145,6 @@ func (w *Worker) process(ctx context.Context, t *models.Task) {
 	t.UpdatedAt = time.Now()
 	_ = w.taskRepo.Save(t)
 	logger.Log("all conversions completed successfully")
-	logger.Log("task marked as failed after exhausting all retries")
 }
 
 var resolutionMeta = map[int]struct {

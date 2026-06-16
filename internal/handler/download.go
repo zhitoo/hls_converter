@@ -35,27 +35,22 @@ func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entries, err := os.ReadDir(outputDir)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "cannot read output directory")
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.zip"`, taskID))
 
 	zw := zip.NewWriter(w)
 	defer zw.Close()
 
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
+	_ = filepath.Walk(outputDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return nil
 		}
-		if err := addToZip(zw, filepath.Join(outputDir, e.Name()), e.Name()); err != nil {
-			// Headers already sent; nothing to do but log.
-			return
+		rel, err := filepath.Rel(outputDir, path)
+		if err != nil {
+			return nil
 		}
-	}
+		return addToZip(zw, path, rel)
+	})
 }
 
 func addToZip(zw *zip.Writer, filePath, name string) error {
