@@ -1,0 +1,12 @@
+[
+  {
+    "user_id": "user-001",
+    "api_key": "secret-token-abc123",
+    "max_concurrent_tasks": 2
+  },
+  {
+    "user_id": "user-002",
+    "api_key": "secret-token-xyz789",
+    "max_concurrent_tasks": 5
+  }
+]
