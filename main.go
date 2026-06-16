@@ -56,6 +56,7 @@ func main() {
 	defer cancel()
 
 	cleaner := cleanup.New(taskRepo, stor)
+	cleaner.DrainStale()
 	go cleaner.Run(ctx, time.Hour)
 
 	for i := 0; i < workerPool; i++ {

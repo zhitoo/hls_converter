@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/zhitoo/hls_converter/internal/models"
 	"github.com/zhitoo/hls_converter/internal/storage"
 	"github.com/zhitoo/hls_converter/internal/task"
 )
@@ -31,6 +32,30 @@ func (c *Cleaner) Run(ctx context.Context, interval time.Duration) {
 		case <-ticker.C:
 			c.sweep()
 		}
+	}
+}
+
+// DrainStale deletes all tasks that were left in Pending or Processing state,
+// which can happen when the server is restarted mid-conversion.
+func (c *Cleaner) DrainStale() {
+	tasks, err := c.taskRepo.ListAll()
+	if err != nil {
+		log.Printf("cleanup: listing tasks on startup: %v", err)
+		return
+	}
+
+	for _, t := range tasks {
+		if t.Status != models.StatusPending && t.Status != models.StatusProcessing {
+			continue
+		}
+		if err := c.storage.DeleteTaskFiles(t.UserID, t.TaskID); err != nil {
+			log.Printf("cleanup: deleting files for stale task %s: %v", t.TaskID, err)
+		}
+		if err := c.taskRepo.Delete(t.TaskID); err != nil {
+			log.Printf("cleanup: deleting stale task record %s: %v", t.TaskID, err)
+			continue
+		}
+		log.Printf("cleanup: removed stale task %s (status: %s)", t.TaskID, t.Status)
 	}
 }
 
