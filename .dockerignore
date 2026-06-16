@@ -1,0 +1,6 @@
+storage/
+tasks/
+.git/
+docs/
+*.log
+hls_converter

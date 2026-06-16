@@ -4,23 +4,32 @@ A Go HTTP service that converts videos to HLS (HTTP Live Streaming) format using
 
 ## Requirements
 
+- Docker & Docker Compose
+
+Or for local development:
 - Go 1.26+
 - FFmpeg installed and available in `$PATH`
 
-## Setup
+## Running with Docker (recommended)
 
 ```bash
-# Install dependencies
-go mod download
-
-# Run
-go run main.go
-
-# Build
-go build -o hls_converter .
+docker compose up -d
 ```
 
-The server starts on `:8080`.
+The server starts on `:8080`. Storage and task data are persisted in Docker named volumes.
+
+To stop:
+
+```bash
+docker compose down
+```
+
+## Running locally
+
+```bash
+go mod download
+go run main.go
+```
 
 ## Configuration
 

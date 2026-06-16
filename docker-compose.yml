@@ -1,0 +1,14 @@
+services:
+  hls_converter:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./users.json:/app/users.json:ro
+      - hls_storage:/app/storage
+      - hls_tasks:/app/tasks
+    restart: unless-stopped
+
+volumes:
+  hls_storage:
+  hls_tasks:
