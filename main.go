@@ -8,8 +8,10 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/zhitoo/hls_converter/internal/auth"
+	"github.com/zhitoo/hls_converter/internal/cleanup"
 	"github.com/zhitoo/hls_converter/internal/converter"
 	"github.com/zhitoo/hls_converter/internal/handler"
 	"github.com/zhitoo/hls_converter/internal/queue"
@@ -52,6 +54,9 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	cleaner := cleanup.New(taskRepo, stor)
+	go cleaner.Run(ctx, time.Hour)
 
 	for i := 0; i < workerPool; i++ {
 		w := queue.NewWorker(taskRepo, conv, logFactory, stor)

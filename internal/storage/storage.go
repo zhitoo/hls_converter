@@ -11,6 +11,7 @@ import (
 type Storage interface {
 	HLSOutputDir(userID, taskID string) (string, error)
 	LogFilePath(taskID string) string
+	DeleteTaskFiles(userID, taskID string) error
 }
 
 type localStorage struct {
@@ -47,6 +48,24 @@ func (s *localStorage) HLSOutputDir(userID, taskID string) (string, error) {
 		return "", fmt.Errorf("creating HLS output dir: %w", err)
 	}
 	return dir, nil
+}
+
+func (s *localStorage) DeleteTaskFiles(userID, taskID string) error {
+	if err := validatePathSegment(userID); err != nil {
+		return err
+	}
+	if err := validatePathSegment(taskID); err != nil {
+		return err
+	}
+	hlsDir := filepath.Join(s.storageDir, "users", userID, taskID)
+	if err := os.RemoveAll(hlsDir); err != nil {
+		return fmt.Errorf("removing HLS dir: %w", err)
+	}
+	logFile := s.LogFilePath(taskID)
+	if err := os.Remove(logFile); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("removing log file: %w", err)
+	}
+	return nil
 }
 
 func (s *localStorage) LogFilePath(taskID string) string {

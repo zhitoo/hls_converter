@@ -15,6 +15,8 @@ type Repository interface {
 	Save(task *models.Task) error
 	FindByID(taskID string) (*models.Task, error)
 	CountActiveByUserID(userID string) (int, error)
+	ListAll() ([]*models.Task, error)
+	Delete(taskID string) error
 }
 
 type fileRepository struct {
@@ -63,6 +65,46 @@ func (r *fileRepository) FindByID(taskID string) (*models.Task, error) {
 		return nil, err
 	}
 	return &t, nil
+}
+
+func (r *fileRepository) ListAll() ([]*models.Task, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	entries, err := os.ReadDir(r.tasksDir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var tasks []*models.Task
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(r.tasksDir, e.Name()))
+		if err != nil {
+			continue
+		}
+		var t models.Task
+		if err := json.Unmarshal(data, &t); err != nil {
+			continue
+		}
+		tasks = append(tasks, &t)
+	}
+	return tasks, nil
+}
+
+func (r *fileRepository) Delete(taskID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	err := os.Remove(r.path(taskID))
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
 }
 
 func (r *fileRepository) CountActiveByUserID(userID string) (int, error) {
