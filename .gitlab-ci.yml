@@ -20,6 +20,7 @@ build:
   tags:
     - public
   script:
+    - echo "$HARBOR_PASS" | docker login $HARBOR_REGISTRY -u "$HARBOR_USER" --password-stdin
     - docker build -t $IMAGE .
   only:
     - main

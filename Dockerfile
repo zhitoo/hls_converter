@@ -1,4 +1,4 @@
-FROM docker.arvancloud.ir/golang:1.26-alpine AS builder
+FROM hb.sepehr.it/library/golang:1.26-alpine AS builder
 
 WORKDIR /app
 COPY go.mod ./
@@ -6,7 +6,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o hls_converter .
 
-FROM docker.arvancloud.ir/alpine:3.21
+FROM hb.sepehr.it/library/alpine:3.21
 
 RUN apk add --no-cache ffmpeg && \
     addgroup -S -g 1000 app && adduser -S -u 1000 -G app app
