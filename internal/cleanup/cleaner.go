@@ -35,8 +35,10 @@ func (c *Cleaner) Run(ctx context.Context, interval time.Duration) {
 	}
 }
 
-// DrainStale deletes all tasks that were left in Pending or Processing state,
-// which can happen when the server is restarted mid-conversion.
+// DrainStale deletes all tasks on startup.
+// Pending/Processing tasks are removed unconditionally (they were left over
+// from a previous crash/restart). Completed/Failed tasks older than taskTTL
+// are also removed so they don't linger on disk across restarts.
 func (c *Cleaner) DrainStale() {
 	tasks, err := c.taskRepo.ListAll()
 	if err != nil {
@@ -44,18 +46,24 @@ func (c *Cleaner) DrainStale() {
 		return
 	}
 
+	cutoff := time.Now().Add(-taskTTL)
 	for _, t := range tasks {
-		if t.Status != models.StatusPending && t.Status != models.StatusProcessing {
+		stale := t.Status == models.StatusPending || t.Status == models.StatusProcessing
+		expired := t.CreatedAt.Before(cutoff)
+
+		if !stale && !expired {
 			continue
 		}
+
 		if err := c.storage.DeleteTaskFiles(t.UserID, t.TaskID); err != nil {
 			log.Printf("cleanup: deleting files for stale task %s: %v", t.TaskID, err)
+			continue
 		}
 		if err := c.taskRepo.Delete(t.TaskID); err != nil {
 			log.Printf("cleanup: deleting stale task record %s: %v", t.TaskID, err)
 			continue
 		}
-		log.Printf("cleanup: removed stale task %s (status: %s)", t.TaskID, t.Status)
+		log.Printf("cleanup: removed stale task %s (status: %s, created %s)", t.TaskID, t.Status, t.CreatedAt.Format(time.RFC3339))
 	}
 }
 
