@@ -70,10 +70,10 @@ func (w *Worker) process(ctx context.Context, t *models.Task) {
 	}
 
 	resolutions := t.Config.Resolutions
-	logger.Log("config resolutions: %v", resolutions)
+	log.Printf("[task:%s] config resolutions: %v", t.TaskID, resolutions)
 	if len(resolutions) == 0 {
 		resolutions = []int{0}
-		logger.Log("no resolutions configured, using original only")
+		log.Printf("[task:%s] no resolutions configured, using original only", t.TaskID)
 	}
 	total := len(resolutions)
 
@@ -133,11 +133,11 @@ func (w *Worker) process(ctx context.Context, t *models.Task) {
 		}
 	}
 
-	logger.Log("writing master playlist for resolutions: %v", resolutions)
+	log.Printf("[task:%s] writing master playlist for resolutions: %v", t.TaskID, resolutions)
 	if err := writeMasterPlaylist(baseDir, resolutions); err != nil {
-		logger.Log("WARNING: master playlist write failed: %v", err)
+		log.Printf("[task:%s] WARNING: master playlist write failed: %v", t.TaskID, err)
 	} else {
-		logger.Log("SUCCESS: master.m3u8 created at %s", filepath.Join(baseDir, "master.m3u8"))
+		log.Printf("[task:%s] SUCCESS: master.m3u8 created at %s", t.TaskID, filepath.Join(baseDir, "master.m3u8"))
 	}
 
 	t.Status = models.StatusCompleted
