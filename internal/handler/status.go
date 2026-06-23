@@ -71,7 +71,7 @@ func buildQualities(resolutions []int) ([]qualityInfo, string) {
 	}
 
 	master := ""
-	if len(resolutions) > 1 {
+	if len(resolutions) >= 1 {
 		master = "master.m3u8"
 	}
 	return qualities, master
