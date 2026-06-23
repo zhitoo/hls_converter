@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ PROJECT_NAME }}-storage
+  namespace: {{ NAMESPACE }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 40Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ PROJECT_NAME }}-tasks
+  namespace: {{ NAMESPACE }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ PROJECT_NAME }}
+  namespace: {{ NAMESPACE }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ PROJECT_NAME }}
+  template:
+    metadata:
+      labels:
+        app: {{ PROJECT_NAME }}
+    spec:
+      imagePullSecrets:
+        - name: harbor-pull
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: hls-converter
+          image: {{ IMAGE }}
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "1"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
+          volumeMounts:
+            - name: storage
+              mountPath: /app/storage
+            - name: tasks
+              mountPath: /app/tasks
+            - name: users
+              mountPath: /app/users.json
+              subPath: users.json
+              readOnly: true
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: {{ PROJECT_NAME }}-storage
+        - name: tasks
+          persistentVolumeClaim:
+            claimName: {{ PROJECT_NAME }}-tasks
+        - name: users
+          secret:
+            secretName: hls-converter-users
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ PROJECT_NAME }}
+  namespace: {{ NAMESPACE }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ PROJECT_NAME }}
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ PROJECT_NAME }}
+  namespace: {{ NAMESPACE }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: {{ INGRESS_DOMAIN }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ PROJECT_NAME }}
+                port:
+                  number: 80

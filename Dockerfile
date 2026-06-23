@@ -9,7 +9,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o hls_converter .
 FROM alpine:3.21
 
 RUN apk add --no-cache ffmpeg && \
-    addgroup -S app && adduser -S app -G app
+    addgroup -S -g 1000 app && adduser -S -u 1000 -G app app
 
 WORKDIR /app
 
