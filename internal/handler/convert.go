@@ -23,9 +23,6 @@ func (s *Server) handleConvert(w http.ResponseWriter, r *http.Request) {
 
 	user := auth.UserFromContext(r.Context())
 
-	log.Printf("convert request: user_id=%s video_url=%q chunk_duration=%d audio_channels=%d resolutions=%v",
-		user.UserID, cfg.VideoURL, cfg.ChunkDuration, cfg.AudioChannels, cfg.Resolutions)
-
 	t, err := s.taskMgr.Create(user.UserID, cfg, user.MaxConcurrentTasks)
 	if err != nil {
 		writeError(w, http.StatusTooManyRequests, err.Error())
@@ -36,6 +33,9 @@ func (s *Server) handleConvert(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
+
+	log.Printf("convert request[%s]: user_id=%s video_url=%q chunk_duration=%d audio_channels=%d resolutions=%v", t.TaskID,
+		user.UserID, cfg.VideoURL, cfg.ChunkDuration, cfg.AudioChannels, cfg.Resolutions)
 
 	writeJSON(w, http.StatusAccepted, map[string]string{
 		"task_id": t.TaskID,
