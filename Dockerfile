@@ -6,10 +6,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o hls_converter .
 
-FROM hb.sepehr.it/library/alpine:3.21
-
-RUN apk add --no-cache ffmpeg && \
-    addgroup -S -g 1000 app && adduser -S -u 1000 -G app app
+FROM hb.sepehr.it/library/alpine-ffmpeg:3.21
 
 WORKDIR /app
 

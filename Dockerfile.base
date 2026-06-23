@@ -1,0 +1,4 @@
+FROM hb.sepehr.it/library/alpine:3.21
+
+RUN apk add --no-cache ffmpeg && \
+    addgroup -S -g 1000 app && adduser -S -u 1000 -G app app
