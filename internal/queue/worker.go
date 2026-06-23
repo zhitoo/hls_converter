@@ -54,9 +54,11 @@ func (w *Worker) Run(ctx context.Context, jobs <-chan *models.Task) {
 }
 
 func (w *Worker) process(ctx context.Context, t *models.Task) {
+	log.Printf("[task:%s] worker picked up task", t.TaskID)
+
 	logger, err := w.logFactory.New(t.TaskID)
 	if err != nil {
-		log.Printf("worker: cannot open logger for task %s: %v", t.TaskID, err)
+		log.Printf("[task:%s] cannot open log file: %v", t.TaskID, err)
 		w.fail(t, "logger unavailable")
 		return
 	}
@@ -64,7 +66,7 @@ func (w *Worker) process(ctx context.Context, t *models.Task) {
 
 	baseDir, err := w.storage.HLSOutputDir(t.UserID, t.TaskID)
 	if err != nil {
-		logger.Log("cannot create output directory: %v", err)
+		log.Printf("[task:%s] cannot create output directory: %v", t.TaskID, err)
 		w.fail(t, "storage error")
 		return
 	}
@@ -83,7 +85,7 @@ func (w *Worker) process(ctx context.Context, t *models.Task) {
 		if height > 0 {
 			outputDir = filepath.Join(baseDir, fmt.Sprintf("%dp", height))
 			if err := os.MkdirAll(outputDir, 0o755); err != nil {
-				logger.Log("cannot create output dir for %dp: %v", height, err)
+				log.Printf("[task:%s] cannot create output dir for %dp: %v", t.TaskID, height, err)
 				w.fail(t, fmt.Sprintf("storage error for %dp", height))
 				return
 			}
@@ -103,7 +105,7 @@ func (w *Worker) process(ctx context.Context, t *models.Task) {
 				t.CurrentStep = stepLabel
 			} else {
 				t.CurrentStep = fmt.Sprintf("%s – retry %d/%d", stepLabel, attempt, maxRetries)
-				logger.Log("retry attempt %d/%d for %s", attempt, maxRetries, stepLabel)
+				log.Printf("[task:%s] retry attempt %d/%d for %s", t.TaskID, attempt, maxRetries, stepLabel)
 				time.Sleep(time.Duration(attempt) * 2 * time.Second)
 			}
 
@@ -121,13 +123,14 @@ func (w *Worker) process(ctx context.Context, t *models.Task) {
 			})
 
 			if convErr == nil {
-				logger.Log("%s completed", stepLabel)
+				log.Printf("[task:%s] %s completed", t.TaskID, stepLabel)
 				break
 			}
-			logger.Log("%s attempt %d failed: %v", stepLabel, attempt+1, convErr)
+			log.Printf("[task:%s] %s attempt %d failed: %v", t.TaskID, stepLabel, attempt+1, convErr)
 		}
 
 		if convErr != nil {
+			log.Printf("[task:%s] %s failed after %d attempts", t.TaskID, stepLabel, maxRetries+1)
 			w.fail(t, fmt.Sprintf("%s failed after %d attempts", stepLabel, maxRetries+1))
 			return
 		}
@@ -145,7 +148,7 @@ func (w *Worker) process(ctx context.Context, t *models.Task) {
 	t.CurrentStep = "Completed"
 	t.UpdatedAt = time.Now()
 	_ = w.taskRepo.Save(t)
-	logger.Log("all conversions completed successfully")
+	log.Printf("[task:%s] all conversions completed successfully", t.TaskID)
 }
 
 var resolutionMeta = map[int]struct {
@@ -175,6 +178,7 @@ func writeMasterPlaylist(baseDir string, heights []int) error {
 }
 
 func (w *Worker) fail(t *models.Task, reason string) {
+	log.Printf("[task:%s] FAILED: %s", t.TaskID, reason)
 	t.Status = models.StatusFailed
 	t.CurrentStep = reason
 	t.UpdatedAt = time.Now()
