@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS builder
+FROM hb.sepehr.it/library/golang:1.26-alpine AS builder
 
 WORKDIR /app
 COPY go.mod ./
@@ -6,10 +6,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o hls_converter .
 
-FROM alpine:3.21
-
-RUN apk add --no-cache ffmpeg && \
-    addgroup -S app && adduser -S app -G app
+FROM hb.sepehr.it/library/alpine-ffmpeg:3.21
 
 WORKDIR /app
 
