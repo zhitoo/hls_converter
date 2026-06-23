@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/zhitoo/hls_converter/internal/auth"
@@ -21,6 +22,9 @@ func (s *Server) handleConvert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := auth.UserFromContext(r.Context())
+
+	log.Printf("convert request: user_id=%s video_url=%q chunk_duration=%d audio_channels=%d resolutions=%v",
+		user.UserID, cfg.VideoURL, cfg.ChunkDuration, cfg.AudioChannels, cfg.Resolutions)
 
 	t, err := s.taskMgr.Create(user.UserID, cfg, user.MaxConcurrentTasks)
 	if err != nil {
