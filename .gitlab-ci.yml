@@ -45,6 +45,6 @@ deploy:
     - sed -i "s|{{ IMAGE }}|$IMAGE|g" kube.yml
     - sed -i "s|{{ INGRESS_DOMAIN }}|$INGRESS_DOMAIN|g" kube.yml
     - mkdir -p ~/.ssh && echo "$K8S_SSH_KEY" > ~/.ssh/k8s_key && chmod 600 ~/.ssh/k8s_key
-    - ssh -i ~/.ssh/k8s_key -o StrictHostKeyChecking=no root@194.180.11.64 "kubectl apply --validate=false -f -" < kube.yml
+    - ssh -i ~/.ssh/k8s_key -o StrictHostKeyChecking=no -p 1164 root@194.180.11.64 "kubectl apply --validate=false -f -" < kube.yml
   only:
     - main
