@@ -131,8 +131,8 @@ func (w *Worker) process(ctx context.Context, t *models.Task) {
 		}
 	}
 
-	if len(t.Config.Resolutions) >= 1 {
-		if err := writeMasterPlaylist(baseDir, t.Config.Resolutions); err != nil {
+	if len(resolutions) >= 1 {
+		if err := writeMasterPlaylist(baseDir, resolutions); err != nil {
 			logger.Log("warning: could not write master playlist: %v", err)
 		} else {
 			logger.Log("master playlist written")
