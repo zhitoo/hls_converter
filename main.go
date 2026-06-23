@@ -27,6 +27,7 @@ const (
 )
 
 func main() {
+	log.SetOutput(os.Stdout)
 	projectRoot := "."
 
 	userRepo, err := auth.NewFileRepository(filepath.Join(projectRoot, "users.json"))
