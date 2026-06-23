@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "hls-api",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

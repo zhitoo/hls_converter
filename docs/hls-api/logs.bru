@@ -1,0 +1,20 @@
+meta {
+  name: logs
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:8080/api/v1/logs/{{task_id}}
+  body: formUrlEncoded
+  auth: bearer
+}
+
+auth:bearer {
+  token: secret-token-abc123
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
