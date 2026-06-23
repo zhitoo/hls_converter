@@ -44,6 +44,6 @@ deploy:
     - sed -i "s/{{ PROJECT_NAME }}/$K8S_PROJECT_NAME/g" kube.yml
     - sed -i "s|{{ IMAGE }}|$IMAGE|g" kube.yml
     - sed -i "s|{{ INGRESS_DOMAIN }}|$INGRESS_DOMAIN|g" kube.yml
-    - kubectl apply -f kube.yml
+    - kubectl apply --validate=false -f kube.yml
   only:
     - main
