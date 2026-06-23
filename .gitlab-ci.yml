@@ -18,9 +18,8 @@ stages:
 build:
   stage: build
   tags:
-    - public
+    - bermetal
   script:
-    - echo "$HARBOR_PASS" | docker login $HARBOR_REGISTRY -u "$HARBOR_USER" --password-stdin
     - docker build -t $IMAGE .
   only:
     - main
@@ -28,7 +27,7 @@ build:
 publish:
   stage: publish
   tags:
-    - public
+    - bermetal
   script:
     - echo "$HARBOR_PASS" | docker login $HARBOR_REGISTRY -u "$HARBOR_USER" --password-stdin
     - docker push $IMAGE
@@ -38,12 +37,12 @@ publish:
 deploy:
   stage: deploy
   tags:
-    - public
+    - bermetal
   script:
     - sed -i "s/{{ NAMESPACE }}/$K8S_NAMESPACE/g" kube.yml
     - sed -i "s/{{ PROJECT_NAME }}/$K8S_PROJECT_NAME/g" kube.yml
     - sed -i "s|{{ IMAGE }}|$IMAGE|g" kube.yml
     - sed -i "s|{{ INGRESS_DOMAIN }}|$INGRESS_DOMAIN|g" kube.yml
-    - ssh -o StrictHostKeyChecking=no -p 1164 root@194.180.11.64 "kubectl apply --validate=false -f -" < kube.yml
+    - kubectl apply -f kube.yml
   only:
     - main
