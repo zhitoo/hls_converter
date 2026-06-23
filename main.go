@@ -57,7 +57,7 @@ func main() {
 
 	cleaner := cleanup.New(taskRepo, stor)
 	cleaner.DrainStale()
-	go cleaner.Run(ctx, time.Hour)
+	go cleaner.Run(ctx, time.Minute)
 
 	for i := 0; i < workerPool; i++ {
 		w := queue.NewWorker(taskRepo, conv, logFactory, stor)
