@@ -40,12 +40,11 @@ deploy:
   tags:
     - public
   script:
-    - echo "$KUBECONFIG_B64" | base64 -d > kubeconfig
-    - export KUBECONFIG=$CI_PROJECT_DIR/kubeconfig
     - sed -i "s/{{ NAMESPACE }}/$K8S_NAMESPACE/g" kube.yml
     - sed -i "s/{{ PROJECT_NAME }}/$K8S_PROJECT_NAME/g" kube.yml
     - sed -i "s|{{ IMAGE }}|$IMAGE|g" kube.yml
     - sed -i "s|{{ INGRESS_DOMAIN }}|$INGRESS_DOMAIN|g" kube.yml
-    - kubectl apply --validate=false -f kube.yml
+    - mkdir -p ~/.ssh && echo "$K8S_SSH_KEY" > ~/.ssh/k8s_key && chmod 600 ~/.ssh/k8s_key
+    - ssh -i ~/.ssh/k8s_key -o StrictHostKeyChecking=no root@194.180.11.64 "kubectl apply --validate=false -f -" < kube.yml
   only:
     - main
